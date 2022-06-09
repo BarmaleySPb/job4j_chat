@@ -17,8 +17,8 @@ public class MessageController {
     }
 
     @GetMapping("/")
-    public Iterable<Message> findAll() {
-        return this.messageRepository.findAll();
+    public ResponseEntity<Iterable<Message>> findAll() {
+        return new ResponseEntity<>(messageRepository.findAll(), HttpStatus.OK);
     }
 
     @GetMapping("/{id}")
