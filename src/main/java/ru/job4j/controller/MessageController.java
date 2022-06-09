@@ -3,6 +3,7 @@ package ru.job4j.controller;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 import ru.job4j.domain.Message;
 import ru.job4j.repository.MessageRepository;
 
@@ -22,15 +23,15 @@ public class MessageController {
 
     @GetMapping("/{id}")
     public ResponseEntity<Message> findById(@PathVariable long id) {
-        var message = this.messageRepository.findById(id);
-        return new ResponseEntity<Message>(
-                message.orElse(new Message()),
-                message.isPresent() ? HttpStatus.OK : HttpStatus.NOT_FOUND
+        var message = this.messageRepository.findById(id).orElseThrow(
+                () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Message with id: " + id + " not found")
         );
+        return new ResponseEntity<Message>(message, HttpStatus.OK);
     }
 
     @PostMapping("/")
     public ResponseEntity<Message> create(@RequestBody Message message) {
+        checkNull(message);
         return new ResponseEntity<Message>(
                 this.messageRepository.save(message),
                 HttpStatus.CREATED
@@ -39,6 +40,7 @@ public class MessageController {
 
     @PutMapping("/")
     public ResponseEntity<Void> update(@RequestBody Message message) {
+        checkNull(message);
         this.messageRepository.save(message);
         return ResponseEntity.ok().build();
     }
@@ -49,5 +51,11 @@ public class MessageController {
         message.setId(id);
         this.messageRepository.delete(message);
         return ResponseEntity.ok().build();
+    }
+
+    private void checkNull(Message message) {
+        if (message.getText() == null) {
+            throw new NullPointerException("Message mustn't be empty");
+        }
     }
 }
