@@ -15,8 +15,20 @@ public class Message {
     private long id;
     private String text;
     @ManyToOne
-    @JoinColumn(name = "creator_id")
+    @JoinColumn(name = "author_id")
     private Person author;
+
+    public Message() {
+
+    }
+
+    public static Message of(long id, String text, Person author) {
+        Message message = new Message();
+        message.setId(id);
+        message.setText(text);
+        message.setAuthor(author);
+        return message;
+    }
 
     @Override
     public boolean equals(Object o) {

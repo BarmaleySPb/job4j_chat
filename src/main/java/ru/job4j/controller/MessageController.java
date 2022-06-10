@@ -5,15 +5,20 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import ru.job4j.domain.Message;
+import ru.job4j.domain.Person;
+import ru.job4j.domain.dto.MessageDTO;
 import ru.job4j.service.MessageService;
+import ru.job4j.service.PersonService;
 
 @RestController
 @RequestMapping("/message")
 public class MessageController {
     private final MessageService messageService;
+    private final PersonService personService;
 
-    public MessageController(final MessageService messageService) {
+    public MessageController(final MessageService messageService, final PersonService personService) {
         this.messageService = messageService;
+        this.personService = personService;
     }
 
     @GetMapping("/")
@@ -51,6 +56,18 @@ public class MessageController {
         message.setId(id);
         this.messageService.delete(message);
         return ResponseEntity.ok().build();
+    }
+
+    @PatchMapping("/")
+    public ResponseEntity<Message> patch(@RequestBody MessageDTO messageDTO) {
+        if (messageDTO.getId() < 1 || messageDTO.getText() == null || messageDTO.getAuthorId() < 1) {
+            throw new NullPointerException("ID, text and authorId mustn't be empty");
+        }
+        Person author = personService.findById(messageDTO.getAuthorId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Author with id: " + messageDTO.getAuthorId() + " not found. Please check authorId."));
+        Message message = Message.of(messageDTO.getId(), messageDTO.getText(), author);
+        return new ResponseEntity<>(messageService.save(message), HttpStatus.OK);
     }
 
     private void checkNull(Message message) {

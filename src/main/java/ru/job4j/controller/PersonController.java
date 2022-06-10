@@ -9,6 +9,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import ru.job4j.domain.Person;
+import ru.job4j.domain.Role;
+import ru.job4j.domain.dto.PersonDTO;
 import ru.job4j.service.PersonService;
 import ru.job4j.service.RoleService;
 
@@ -68,6 +70,20 @@ public class PersonController {
         person.setPassword(encoder.encode(person.getPassword()));
         person.setRole(roleService.findByName("user"));
         return new ResponseEntity<Person>(personService.save(person), HttpStatus.CREATED);
+    }
+
+    @PatchMapping("/")
+    public ResponseEntity<Person> patch(@RequestBody PersonDTO personDTO) {
+        if (personDTO.getId() < 1 || personDTO.getName() == null || personDTO.getPassword() == null
+                || personDTO.getEmail() == null) {
+            throw new NullPointerException("ID, userName, email, and password mustn't be empty");
+        }
+        Role role = roleService.findById(personDTO.getRoleId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Role with id: " + personDTO.getRoleId() + " not found. Please check roleId."));
+        Person person = Person.of(personDTO.getId(), personDTO.getName(),
+                personDTO.getPassword(), personDTO.getEmail(), role);
+        return new ResponseEntity<>(personService.save(person), HttpStatus.OK);
     }
 
     private void checkNull(Person person) {

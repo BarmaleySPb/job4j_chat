@@ -5,6 +5,8 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.job4j.domain.Role;
 import ru.job4j.repository.RoleRepository;
 
+import java.util.Optional;
+
 @Service
 @Transactional
 public class RoleService {
@@ -12,6 +14,10 @@ public class RoleService {
 
     public RoleService(RoleRepository roleRepository) {
         this.roleRepository = roleRepository;
+    }
+
+    public Optional<Role> findById(int id) {
+        return roleRepository.findById(id);
     }
 
     public Role findByName(String name) {

@@ -27,6 +27,18 @@ public class Room {
     @OneToMany
     private Set<Message> messages = new HashSet<>();
 
+    public Room() {
+
+    }
+
+    public static Room of(long id, String name, Person creator) {
+        Room room = new Room();
+        room.setId(id);
+        room.setName(name);
+        room.setCreator(creator);
+        return room;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {

@@ -20,6 +20,20 @@ public class Person {
     @JoinColumn(name = "role_id")
     private Role role;
 
+    public Person() {
+
+    }
+
+    public static Person of(int id, String name, String password, String email, Role role) {
+        Person person = new Person();
+        person.setId(id);
+        person.setName(name);
+        person.setPassword(password);
+        person.setEmail(email);
+        person.setRole(role);
+        return person;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
