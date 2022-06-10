@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import ru.job4j.domain.Person;
 import ru.job4j.service.PersonService;
+import ru.job4j.service.RoleService;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -22,11 +23,13 @@ public class PersonController {
     private static final Logger LOGGER = LoggerFactory.getLogger(PersonController.class.getSimpleName());
     private final ObjectMapper objectMapper;
     private final PersonService personService;
+    private final RoleService roleService;
     private final BCryptPasswordEncoder encoder;
 
-    public PersonController(final PersonService personService, BCryptPasswordEncoder encoder,
-                            ObjectMapper objectMapper) {
+    public PersonController(final PersonService personService, final RoleService roleService,
+                            BCryptPasswordEncoder encoder, ObjectMapper objectMapper) {
         this.personService = personService;
+        this.roleService = roleService;
         this.encoder = encoder;
         this.objectMapper = objectMapper;
     }
@@ -42,15 +45,6 @@ public class PersonController {
                 () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Person with id: " + id + " not found.")
         );
         return new ResponseEntity<Person>(person, HttpStatus.OK);
-    }
-
-    @PostMapping("/")
-    public ResponseEntity<Person> create(@RequestBody Person person) {
-        checkNull(person);
-        return new ResponseEntity<Person>(
-                this.personService.save(person),
-                HttpStatus.CREATED
-        );
     }
 
     @PutMapping("/")
@@ -69,16 +63,16 @@ public class PersonController {
     }
 
     @PostMapping("/sign-up")
-    public void signUp(@RequestBody Person person) {
+    public ResponseEntity<Person> signUp(@RequestBody Person person) {
         checkNull(person);
         person.setPassword(encoder.encode(person.getPassword()));
-        personService.save(person);
+        person.setRole(roleService.findByName("user"));
+        return new ResponseEntity<Person>(personService.save(person), HttpStatus.CREATED);
     }
 
     private void checkNull(Person person) {
-        if (person.getName() == null || person.getPassword() == null || person.getEmail() == null
-                || person.getRole() == null) {
-            throw new NullPointerException("Username, email, password and role mustn't be empty");
+        if (person.getName() == null || person.getPassword() == null || person.getEmail() == null) {
+            throw new NullPointerException("Username, email, and password mustn't be empty");
         }
         if (person.getPassword().length() < 6) {
             throw new IllegalArgumentException("Invalid password. Password length must be more than 5 characters.");
