@@ -5,25 +5,25 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import ru.job4j.domain.Room;
-import ru.job4j.repository.RoomRepository;
+import ru.job4j.service.RoomService;
 
 @RestController
 @RequestMapping("/room")
 public class RoomController {
-    private final RoomRepository roomRepository;
+    private final RoomService roomService;
 
-    public RoomController(final RoomRepository roomRepository) {
-        this.roomRepository = roomRepository;
+    public RoomController(final RoomService roomService) {
+        this.roomService = roomService;
     }
 
     @GetMapping("/")
     public Iterable<Room> findAll() {
-        return this.roomRepository.findAll();
+        return this.roomService.findAll();
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<Room> findById(@PathVariable long id) {
-        var room = this.roomRepository.findById(id).orElseThrow(
+        var room = this.roomService.findById(id).orElseThrow(
                 () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Room with id: " + id + " not found")
         );
         return new ResponseEntity<Room>(room, HttpStatus.OK);
@@ -33,7 +33,7 @@ public class RoomController {
     public ResponseEntity<Room> create(@RequestBody Room room) {
         checkNull(room);
         return new ResponseEntity<Room>(
-                this.roomRepository.save(room),
+                this.roomService.save(room),
                 HttpStatus.CREATED
         );
     }
@@ -41,7 +41,7 @@ public class RoomController {
     @PutMapping("/")
     public ResponseEntity<Void> update(@RequestBody Room room) {
         checkNull(room);
-        this.roomRepository.save(room);
+        this.roomService.save(room);
         return ResponseEntity.ok().build();
     }
 
@@ -49,7 +49,7 @@ public class RoomController {
     public ResponseEntity<Void> delete(@PathVariable long id) {
         Room room = new Room();
         room.setId(id);
-        this.roomRepository.delete(room);
+        this.roomService.delete(room);
         return ResponseEntity.ok().build();
     }
 

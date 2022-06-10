@@ -5,25 +5,25 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import ru.job4j.domain.Message;
-import ru.job4j.repository.MessageRepository;
+import ru.job4j.service.MessageService;
 
 @RestController
 @RequestMapping("/message")
 public class MessageController {
-    private final MessageRepository messageRepository;
+    private final MessageService messageService;
 
-    public MessageController(final MessageRepository messageRepository) {
-        this.messageRepository = messageRepository;
+    public MessageController(final MessageService messageService) {
+        this.messageService = messageService;
     }
 
     @GetMapping("/")
     public ResponseEntity<Iterable<Message>> findAll() {
-        return new ResponseEntity<>(messageRepository.findAll(), HttpStatus.OK);
+        return new ResponseEntity<>(messageService.findAll(), HttpStatus.OK);
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<Message> findById(@PathVariable long id) {
-        var message = this.messageRepository.findById(id).orElseThrow(
+        var message = this.messageService.findById(id).orElseThrow(
                 () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Message with id: " + id + " not found")
         );
         return new ResponseEntity<Message>(message, HttpStatus.OK);
@@ -33,7 +33,7 @@ public class MessageController {
     public ResponseEntity<Message> create(@RequestBody Message message) {
         checkNull(message);
         return new ResponseEntity<Message>(
-                this.messageRepository.save(message),
+                this.messageService.save(message),
                 HttpStatus.CREATED
         );
     }
@@ -41,7 +41,7 @@ public class MessageController {
     @PutMapping("/")
     public ResponseEntity<Void> update(@RequestBody Message message) {
         checkNull(message);
-        this.messageRepository.save(message);
+        this.messageService.save(message);
         return ResponseEntity.ok().build();
     }
 
@@ -49,7 +49,7 @@ public class MessageController {
     public ResponseEntity<Void> delete(@PathVariable long id) {
         Message message = new Message();
         message.setId(id);
-        this.messageRepository.delete(message);
+        this.messageService.delete(message);
         return ResponseEntity.ok().build();
     }
 
