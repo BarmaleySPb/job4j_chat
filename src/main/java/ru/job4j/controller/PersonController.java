@@ -6,16 +6,19 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import ru.job4j.domain.Person;
 import ru.job4j.domain.Role;
 import ru.job4j.domain.dto.PersonDTO;
+import ru.job4j.handler.Operation;
 import ru.job4j.service.PersonService;
 import ru.job4j.service.RoleService;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
 import java.io.IOException;
 import java.util.HashMap;
 
@@ -50,7 +53,8 @@ public class PersonController {
     }
 
     @PutMapping("/")
-    public ResponseEntity<Void> update(@RequestBody Person person) {
+    @Validated(Operation.OnUpdate.class)
+    public ResponseEntity<Void> update(@Valid @RequestBody Person person) {
         checkNull(person);
         this.personService.save(person);
         return ResponseEntity.ok().build();
@@ -65,24 +69,27 @@ public class PersonController {
     }
 
     @PostMapping("/sign-up")
-    public ResponseEntity<Person> signUp(@RequestBody Person person) {
+    @Validated(Operation.OnCreate.class)
+    public ResponseEntity<Person> signUp(@Valid @RequestBody Person person) {
         checkNull(person);
+        checkPassword(person.getPassword());
         person.setPassword(encoder.encode(person.getPassword()));
         person.setRole(roleService.findByName("user"));
         return new ResponseEntity<Person>(personService.save(person), HttpStatus.CREATED);
     }
 
     @PatchMapping("/")
-    public ResponseEntity<Person> patch(@RequestBody PersonDTO personDTO) {
+    public ResponseEntity<Person> patch(@Valid @RequestBody PersonDTO personDTO) {
         if (personDTO.getId() < 1 || personDTO.getName() == null || personDTO.getPassword() == null
                 || personDTO.getEmail() == null) {
             throw new NullPointerException("ID, userName, email, and password mustn't be empty");
         }
+        checkPassword(personDTO.getPassword());
         Role role = roleService.findById(personDTO.getRoleId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Role with id: " + personDTO.getRoleId() + " not found. Please check roleId."));
         Person person = Person.of(personDTO.getId(), personDTO.getName(),
-                personDTO.getPassword(), personDTO.getEmail(), role);
+                encoder.encode(personDTO.getPassword()), personDTO.getEmail(), role);
         return new ResponseEntity<>(personService.save(person), HttpStatus.OK);
     }
 
@@ -90,13 +97,18 @@ public class PersonController {
         if (person.getName() == null || person.getPassword() == null || person.getEmail() == null) {
             throw new NullPointerException("Username, email, and password mustn't be empty");
         }
-        if (person.getPassword().length() < 6) {
-            throw new IllegalArgumentException("Invalid password. Password length must be more than 5 characters.");
+    }
+
+    private void checkPassword(String password) {
+        if (!password.matches("^(?=.*\\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#&()–\\[{}\\]:;',?%/*~$^+=<>]).{6,20}$")) {
+            throw new IllegalArgumentException("Invalid password. Password length must be from five to twenty"
+                    + " characters, and include uppercase/lowercase letters, numbers and special characters.");
         }
     }
 
     @ExceptionHandler(value = { IllegalArgumentException.class })
-    public void exceptionHandler(Exception e, HttpServletRequest request, HttpServletResponse response) throws IOException {
+    public void exceptionHandler(Exception e, HttpServletRequest request, HttpServletResponse response)
+            throws IOException {
         response.setStatus(HttpStatus.BAD_REQUEST.value());
         response.setContentType("application/json");
         response.getWriter().write(objectMapper.writeValueAsString(new HashMap<>() { {

@@ -2,8 +2,11 @@ package ru.job4j.domain;
 
 import lombok.Getter;
 import lombok.Setter;
+import ru.job4j.handler.Operation;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -14,7 +17,9 @@ import java.util.Set;
 public class Room {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @NotNull(message = "Id must be non null", groups = {Operation.OnUpdate.class, Operation.OnDelete.class})
     private long id;
+    @NotBlank(message = "Room name must be not empty")
     private String name;
     @ManyToOne
     @JoinColumn(name = "creator_id")

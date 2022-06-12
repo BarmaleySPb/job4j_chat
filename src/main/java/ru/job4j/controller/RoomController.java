@@ -2,15 +2,17 @@ package ru.job4j.controller;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
-import ru.job4j.domain.Message;
 import ru.job4j.domain.Person;
 import ru.job4j.domain.Room;
-import ru.job4j.domain.dto.MessageDTO;
 import ru.job4j.domain.dto.RoomDTO;
+import ru.job4j.handler.Operation;
 import ru.job4j.service.PersonService;
 import ru.job4j.service.RoomService;
+
+import javax.validation.Valid;
 
 @RestController
 @RequestMapping("/room")
@@ -37,7 +39,8 @@ public class RoomController {
     }
 
     @PostMapping("/")
-    public ResponseEntity<Room> create(@RequestBody Room room) {
+    @Validated(Operation.OnCreate.class)
+    public ResponseEntity<Room> create(@Valid @RequestBody Room room) {
         checkNull(room);
         return new ResponseEntity<Room>(
                 this.roomService.save(room),
@@ -46,14 +49,15 @@ public class RoomController {
     }
 
     @PutMapping("/")
-    public ResponseEntity<Void> update(@RequestBody Room room) {
+    @Validated(Operation.OnUpdate.class)
+    public ResponseEntity<Void> update(@Valid @RequestBody Room room) {
         checkNull(room);
         this.roomService.save(room);
         return ResponseEntity.ok().build();
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable long id) {
+    public ResponseEntity<Void> delete(@Valid @PathVariable long id) {
         Room room = new Room();
         room.setId(id);
         this.roomService.delete(room);
@@ -61,13 +65,13 @@ public class RoomController {
     }
 
     @PatchMapping("/")
-    public ResponseEntity<Room> patch(@RequestBody RoomDTO roomDTO) {
+    public ResponseEntity<Room> patch(@Valid @RequestBody RoomDTO roomDTO) {
         if (roomDTO.getId() < 1 || roomDTO.getName() == null || roomDTO.getCreatorId() < 1) {
             throw new NullPointerException("ID, name room and creatorId mustn't be empty");
         }
         Person creator = personService.findById(roomDTO.getCreatorId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Room creator name with id: " + roomDTO.getCreatorId() + " not found. Please check creatorId."));
+                       "Room creator name with id: " + roomDTO.getCreatorId() + " not found. Please check creatorId."));
         Room room = Room.of(roomDTO.getId(), roomDTO.getName(), creator);
         return new ResponseEntity<>(roomService.save(room), HttpStatus.OK);
     }

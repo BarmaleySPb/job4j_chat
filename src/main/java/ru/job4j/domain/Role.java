@@ -2,11 +2,14 @@ package ru.job4j.domain;
 
 import lombok.Getter;
 import lombok.Setter;
+import ru.job4j.handler.Operation;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.util.Objects;
 
 @Entity
@@ -15,7 +18,9 @@ import java.util.Objects;
 public class Role {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @NotNull(message = "Id must be non null", groups = {Operation.OnUpdate.class, Operation.OnDelete.class})
     private int id;
+    @NotBlank(message = "Role name must be not empty")
     private String name;
 
     public Role() {
